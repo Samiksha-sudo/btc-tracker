@@ -26,3 +26,24 @@ npm run dev
 
 - No back end is included, so the socket features fall back to mock data.
 - CoinGecko's free tier is rate limited.
+
+## High-level design (HLD)
+
+```mermaid
+flowchart LR
+    U[User] --> UI[React UI]
+    UI --> H[Hooks<br/>useWebSocket, useTradingWebSocket]
+    UI --> C[cryptoApi service]
+    C -->|HTTPS| G[CoinGecko API]
+    H -.->|socket.io, not included| S[Backend :4000]
+    H --> M[Mock data utilities]
+```
+
+## Low-level design (LLD)
+
+| Piece | Detail |
+| --- | --- |
+| `services/cryptoApi.ts` | `CryptoApiService.fetchBTCPrice()` calls CoinGecko, returns cached data if the last fetch was under 10 seconds ago, and keeps a price history |
+| `socket.ts` | Single shared `socket.io-client` connection to `http://localhost:4000` |
+| `hooks/useWebSocket.ts`, `hooks/useTradingWebSocket.ts` | Live data hooks that use the mock data utilities |
+| `utils/mockTradingData.ts` | Mock trading data that feeds `CampaignTable` and `RegionMap` |
